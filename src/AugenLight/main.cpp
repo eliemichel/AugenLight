@@ -163,30 +163,48 @@ void init() {
 	// Hardcoded shader source code. You may want to quickly switch to a
 	// mechanism that loads them from files at run time.
 	const char *vertexShaderSource =
-		"#version 450\n" // Mandatory first line to specify the minimum target version of opengl (450 for OpenGL 4.5)
+		// Mandatory first line to specify the minimum target version of opengl
+		// (450 for OpenGL 4.5)
+		"#version 450\n"
 
-		"layout(location=0) in vec3 vPosition;\n" // Get the input attribute #0 (decribed in the VAO) as a vec3 and call it "position"
-		"layout(location=1) in vec3 vColor;\n" // Get the input attribute #1 as a vec3 and call it "color"
+		// Get the input attribute #0 (decribed in the VAO) as a vec3 and call
+		// it "position"
+		"layout(location=0) in vec3 vPosition;\n"
+		// Get the input attribute #1 as a vec3 and call it "color"
+		"layout(location=1) in vec3 vColor;\n"
 
-		"out vec3 fColor;\n" // Define a custom output attribute. It will be interpolated among faces and provided to the fragment shader
+		// Define a custom output attribute. It will be interpolated among faces
+		// and provided to the fragment shader
+		"out vec3 fColor;\n"
 
 		"void main() {\n"
-		"    gl_Position = vec4(vPosition, 1.0);\n" // Fill the gl_Position output attribute, which is a vec4 required by the fixed parts ("fixed" as in "non-programmable") of the GPU pipeline
-		"    fColor = vColor;\n" // Fill the fColor output attribute
+		// Fill the gl_Position output attribute, which is a vec4 required by
+		// the fixed parts ("fixed" as in "non-programmable") of the GPU
+		// pipeline
+		"    gl_Position = vec4(vPosition, 1.0);\n"
+		// Fill the fColor output attribute
+		"    fColor = vColor;\n"
 		"}\n";
 
 	const char *fragmentShaderSource =
 		"#version 450\n"
 
-		"in vec3 fColor;\n" // Get the attribute from the vertex shader, interpolated between the values of the vertex of the triangle that generated this fragment
+		// Get the attribute from the vertex shader, interpolated between the
+		// values of the vertex of the triangle that generated this fragment.
+		"in vec3 fColor;\n"
 
-		"out vec4 color;\n" // Implicitely `layout(location=0) out vec4 color`, this output will be the value added to the color attachment 0 of the target framebuffer (e.g. the screen)
+		// Implicitely `layout(location=0) out vec4 color`, this output will be
+		// the value added to the color attachment 0 of the target framebuffer
+		// (e.g. the screen)
+		"out vec4 color;\n"
 
-		"uniform float uTime;" // A variable that will be set from the CPU, see update()
+		// A variable that will be set from the CPU, see update()
+		"uniform float uTime;"
 
 		"void main() {\n"
+		// Fill the output color
 		"    float s = sin(uTime);\n"
-		"    color = vec4(fColor * s * s, 1.0);" // Fill the output color
+		"    color = vec4(fColor * s * s, 1.0);"
 		"}\n";
 
 	// The program is created like any other opengl object:
@@ -205,7 +223,8 @@ void init() {
 	// is because the shader compilation depends on the user's GPU.
 	glCompileShader(vertexShader);
 	// Check for compilation errors and display message. Error handling should
-	// be more advanced than that but its a minimum.
+	// be more advanced than that but its a minimum. (This is a custom function
+	// of mine, defined in utils/shader.cpp.)
 	checkShader(vertexShader, "vertexShader");
 	// We add the compiled shader to the program
 	glAttachShader(program, vertexShader);
@@ -222,8 +241,8 @@ void init() {
 	glAttachShader(program, fragmentShader);
 	glDeleteShader(fragmentShader);
 
-	// Again, as for a normal program, its objects (the shaders, in this case) must
-	// be linked together.
+	// Again, as for a normal program, its objects (the shaders, in this case)
+	// must be linked together.
 	glLinkProgram(program);
 	checkProgram(program);
 
