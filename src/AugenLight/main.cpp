@@ -189,7 +189,7 @@ void init() {
 		"    color = vec4(fColor * s * s, 1.0);" // Fill the output color
 		"}\n";
 
-	// The program is created in a standard way:
+	// The program is created like any other opengl object:
 	program = glCreateProgram();
 
 	// We will load the GPU program by sections called the shaders.
@@ -222,7 +222,7 @@ void init() {
 	glAttachShader(program, fragmentShader);
 	glDeleteShader(fragmentShader);
 
-	// Again, as a normal program, its objects (the shaders, in this case) must
+	// Again, as for a normal program, its objects (the shaders, in this case) must
 	// be linked together.
 	glLinkProgram(program);
 	checkProgram(program);
@@ -267,7 +267,7 @@ void update(double time) {
 	// B. UPDATE UNIFORMS
 
 	// Uniforms are shader program global variables that are uniform for a
-	// diven draw call, but can be modified at any time between them.
+	// given draw call, but can be modified at any time between them.
 	// Get the uniform index given its name. If the name does not match any
 	// uniform, this returns -1. Beware that even if the uniform is declared,
 	// it will be removed from the program at linkage if it is not used and so
@@ -325,15 +325,15 @@ int main(int argc, char *argv[]) {
 
 	init();
 
-    while (!glfwWindowShouldClose(window)) {
+	while (!glfwWindowShouldClose(window)) {
 		update(glfwGetTime());
 		render();
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-    }
+	}
 
 	finish();
 
 	shutdown(window);
-    return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }
