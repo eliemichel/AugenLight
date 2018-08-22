@@ -303,10 +303,13 @@ void update(double time) {
 }
 
 void render() {
+	// Set the color that will be used to fill the screen
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	// Clear the framebuffer. This fills the color attachment with the color
+	// defined on the previous line, but also reset the depth buffer.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Specify which program to use
+	// Specify which program to run on the GPU
 	glUseProgram(program);
 
 	// Bind the VAO specifying where to get input data for the program. It
