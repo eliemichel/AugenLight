@@ -9,7 +9,7 @@ The C++ code of the program is located in [`src/AugenLight`](src/AugenLight) and
 
 ### Downloading
 
-This repository contains *submodules* to include the GLFW and glad repositories, so **do not use** the *dowbload zip* button provided by GitHub. If you want a zip, download the [last release](https://github.com/eliemichel/AugenLight/releases/download/lvl0-v1.0/AugenLight.zip). To clone the repository using git, run:
+This repository contains *submodules* to include the GLFW and glad repositories, so **do not use** the *download zip* button provided by GitHub. If you want a zip, download the [last release](https://github.com/eliemichel/AugenLight/releases/download/lvl0-v1.0/AugenLight.zip). To clone the repository using git, run:
 
 ```
 git clone --recurse-submodules https://github.com/eliemichel/AugenLight.git
