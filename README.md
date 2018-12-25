@@ -21,6 +21,26 @@ If you forgot to use the `--recurse-submodules`, you can get submodules with:
 git submodule update --init --recursive
 ```
 
+### Dependencies
+
+Before building, you may need some additional piece of software depending on your platform.
+
+#### Windows
+
+On Windows, you just need [cmake](https://cmake.org/).
+
+#### Linux
+
+You can install the required dependencies with the following `apt` command line, or something similar on other packet managers:
+
+```
+sudo apt-get install git cmake xorg-dev
+```
+
+#### OSX
+
+You should only need [cmake](https://cmake.org/), but this has not been tested. Feel free to let me know if anything is missing.
+
 ### Building
 
 This is a standard CMake project. Building it consits in running:
