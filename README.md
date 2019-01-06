@@ -27,19 +27,19 @@ Before building, you may need some additional piece of software depending on you
 
 #### Windows
 
-On Windows, you just need [cmake](https://cmake.org/).
+On Windows, you need [cmake](https://cmake.org/) and Python.
 
 #### Linux
 
 You can install the required dependencies with the following `apt` command line, or something similar on other packet managers:
 
 ```
-sudo apt-get install git cmake xorg-dev
+sudo apt-get install python git cmake xorg-dev
 ```
 
 #### OSX
 
-You should only need [cmake](https://cmake.org/), but this has not been tested. Feel free to let me know if anything is missing.
+You should only need [cmake](https://cmake.org/) and Python, but this has not been tested. Feel free to let me know if anything is missing.
 
 ### Building
 
