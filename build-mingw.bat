@@ -9,7 +9,7 @@ mkdir build-mingw
 cd build-mingw
 
 :: Call cmake to generate the MinGW solution
-cmake .. -G "MinGW Makefiles"
+cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug
 
 @echo off
 :: Check that it run all right

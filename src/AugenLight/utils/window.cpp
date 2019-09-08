@@ -66,9 +66,9 @@ GLFWwindow * startup() {
 		return nullptr;
 	}
 
-#if _DEBUG
+#ifndef NDEBUG
 	enableGlDebug();
-#endif // _DEBUG
+#endif // !NDEBUG
 
 	std::cout << "INFO: Running over OpenGL " << GLVersion.major << "." << GLVersion.minor << std::endl;
 

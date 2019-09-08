@@ -12,7 +12,7 @@ cd build-gcc
 
 # Call cmake to generate the Makefile. You can then build with 'make' and
 # install with 'make install'
-cmake ..
+cmake .. -DCMAKE_BUILD_TYPE=Debug
 
 # Check that it run all right
 if [ $? -eq 0 ]
