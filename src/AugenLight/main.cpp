@@ -22,309 +22,261 @@
  * in the Software.
  */
 
+#define _DEBUG
+
 #include <glad/glad.h> // must be the first include
 #include "utils/window.h" // for startup() and shutdown()
 #include "utils/shader.h" // for checkShader() and checkProgram()
+#include "utils/file.h" // for loadTextfile()
+#include "utils/debug.h" // for enableGlDebug()
 #include <cstdlib> // for EXIT_FAILURE and EXIT_SUCCESS
 #include <cmath> // for sin and cos
+#include <vector>
+#include <sstream>
+#include <iostream>
+#include <fstream>
+#include <glm/glm/glm.hpp>
+#include <glm/glm/gtc/matrix_transform.hpp>
+#include <glm/glm/gtc/type_ptr.hpp>
+#include "TinyPngOut.hpp"
 
-/**
- * Tip: place a breakpoint at line 96 in utils/debug.cpp
- */
-
-/**
- * This is a demo file in which it is fine to use globals in order to minimize
- * boilerplate. If you would like to embed this in a more complexe application,
- * you would have make those globals the attributes of a class, and the
- * init/finish/update/render functions would be methods.
- */
-
-/**
- * We first need a GPU buffer in which storing the vertex attributes, i.e.
- * everything we know about the vertex: position, color, etc.
- * We create for this a buffer object. It is a simple unsigned int (GLuint), an
- * identifier used internally by opengl and that refers to the actual buffer.
- * The buffer itself is allocated in the GPU memory, so it can only be affected
- * through OpenGL.
- * This buffer of vertex attributes is typically called a Vertex Buffer Object,
- * or VBO.
- */
-GLuint vbo;
-
-/**
- * Besides the buffer of attributes itself, we need to tell opengl how to
- * interprete it. This memory layout information is stored in an opengl object
- * called a Vertex Array Object.
- */
-GLuint vao;
-
-/**
- * Once we've got the data to render, we must tell how to draw it. This is done
- * with the shader program, that gathers at least a vertex shader and a
- * fragment shader. The program holds the user code that will run on the GPU.
- */
-GLuint program;
-
-
-void init() {
-	//////////////////////////////////////////
-	// 1. VERTEX BUFFER
-
-	// This is our raw vertex data. It could be constructed dynamically but for
-	// this example it is a simple array. The memory can be organized as one
-	// wishes, we'll tell opengl how to interprete it later on.
-	// Here we decided to list position0 color0 position1 color1 etc. We use
-	// the type GLfloat because it will be sent to the GPU memory, that might
-	// have a different definition of float than the CPU.
-	const GLfloat points[] = {
-		 0.f,  .5f,  0.f,   1.f, 0.f, 0.f,
-		 .5f, -.5f,  0.f,   0.f, 1.f, 0.f,
-		-.5f, -.5f,  0.f,   0.f, 0.f, 1.f,
-	};
-
-	// As any OpenGL object, it is first created using glCreate*() functions
-	// and must be freed using similar glDelete*() functions.
-	// NB: You'll find a lot of references to glGenBuffers. Here we use
-	// glCreateBuffers which is new to OpenGL 4.5 and avoid in a lot of case to
-	// use glBind* functions and allows to use function on so called "named
-	// buffers" instead.
-	glCreateBuffers(1, &vbo);
-
-	// Allocate the memory on the GPU for the buffer named <vbo>. This requires
-	// a size, and some flags about how to lay out the memory (it depends on
-	// its usage).
-	// The flag GL_DYNAMIC_STORAGE_BIT tells opengl that this buffer might be
-	// modified from the CPU later. We set it in this example because the
-	// update function gives an example of how to do so, but one could have
-	// initialized an immutable buffer using:
-	//     glNamedBufferStorage(vbo, sizeof(points), points, 0);
-	// Checkout the documentation for more information:
-	// https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBufferStorage.xhtml
-	glNamedBufferStorage(vbo, sizeof(points), NULL, GL_DYNAMIC_STORAGE_BIT);
-
-	// Sends data to the buffer. This copies data from <points>, which is
-	// stored in the CPU RAM, to the buffer of <vbo>, which sits in the GPU
-	// memory.
-	glNamedBufferSubData(vbo, 0, sizeof(points), points);
-
-	//////////////////////////////////////////
-	// 2. VERTEX ARRAY
-
-	// Create the Vertex Array Object
-	glCreateVertexArrays(1, &vao);
-
-	// Before doing anything on or with a VAO, we need to bind it to the
-	// current context. There can be only one "active" VAO at a time. This is
-	// very common mechanism in OpenGL to bind objects of a given role.
-	glBindVertexArray(vao);
-
-	// In this vertex array, we will list vertex ATTRIBUTES, representing for
-	// instance the position, the color, etc. Let's start with the position,
-	// that we'll place in attribute #0. We first have to enable it.
-	glEnableVertexAttribArray(0);
-
-	// We bind the VBO to the current context because the next function call
-	// will refer to it, as stated in its documentation:
-	// https://www.khronos.org/opengl/wiki/GLAPI/glVertexAttribPointer
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-	// Describe the first vertex attribute to OpenGL (of index #0). It is made
-	// of 3 consecutive floats, that must not be normalized (this could be
-	// useful for normals). The last two parameters are the stride and offset.
-	// They tell how to get data from the buffer currently bound to
-	// GL_ARRAY_BUFFER, namely our VBO.
-	// The offset is the index of the first vertex position in the buffer.
-	// Since our vertex buffer starts with a position (0.0, 0.5, 0.0), it is
-	// set to 0.
-	// The stride is the byte distance between two consecutive vertex position
-	// informations. This is what allows us to mix both position and color in
-	// the same buffer: we tell opengl to read 3 floats at position 0, then to
-	// jump to 0 + 6 floats for the next position, thus skipping the 3 floats
-	// that describe the vertex color.
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), 0);
-
-	// The color vertex attribute follows the same pattern, and is the
-	// attribute #1. The only difference is its offset in the VBO, because the
-	// first color attribute is after the first position, so has an offset of
-	// 3 floats. The stride remains the same because the next color is also
-	// 6 floats away, at float 9.
-	// No need to bind the VBO again, it is still bound.
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-
-	// We can unbind the VAO. This is not required, but it illustrate that
-	// a. the VAO stores all the information about vertex attributes, and
-	// b. unbinding objects in OpenGL is always done by binding the object 0
-	glBindVertexArray(0);
-
-	//////////////////////////////////////////
-	// 3. SHADERS
-
-	// Hardcoded shader source code. You may want to quickly switch to a
-	// mechanism that loads them from files at run time.
-	const char *vertexShaderSource =
-		// Mandatory first line to specify the minimum target version of opengl
-		// (450 for OpenGL 4.5)
-		"#version 450\n"
-
-		// Get the input attribute #0 (decribed in the VAO) as a vec3 and call
-		// it "position"
-		"layout(location=0) in vec3 vPosition;\n"
-		// Get the input attribute #1 as a vec3 and call it "color"
-		"layout(location=1) in vec3 vColor;\n"
-
-		// Define a custom output attribute. It will be interpolated among faces
-		// and provided to the fragment shader
-		"out vec3 fColor;\n"
-
-		"void main() {\n"
-		// Fill the gl_Position output attribute, which is a vec4 required by
-		// the fixed parts ("fixed" as in "non-programmable") of the GPU
-		// pipeline
-		"    gl_Position = vec4(vPosition, 1.0);\n"
-		// Fill the fColor output attribute
-		"    fColor = vColor;\n"
-		"}\n";
-
-	const char *fragmentShaderSource =
-		"#version 450\n"
-
-		// Get the attribute from the vertex shader, interpolated between the
-		// values of the vertex of the triangle that generated this fragment.
-		"in vec3 fColor;\n"
-
-		// Implicitely `layout(location=0) out vec4 color`, this output will be
-		// the value added to the color attachment 0 of the target framebuffer
-		// (e.g. the screen)
-		"out vec4 color;\n"
-
-		// A variable that will be set from the CPU, see update()
-		"uniform float uTime;"
-
-		"void main() {\n"
-		// Fill the output color
-		"    float s = sin(uTime);\n"
-		"    color = vec4(fColor * s * s, 1.0);"
-		"}\n";
-
-	// The program is created like any other opengl object:
-	program = glCreateProgram();
-
-	// We will load the GPU program by sections called the shaders.
-	// As usual, a shader is handled through a GLuint.
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	// We provide the source code to the shader object (the parameters are
-	// complicated by the fact that it can take an array of C strings if
-	// needed)
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	// As any source code, the shader must be compiled before it can be
-	// executed. Note that the shaders are compiled at run time, when the
-	// application is started, and not when this C++ program is compiled. This
-	// is because the shader compilation depends on the user's GPU.
-	glCompileShader(vertexShader);
-	// Check for compilation errors and display message. Error handling should
-	// be more advanced than that but its a minimum. (This is a custom function
-	// of mine, defined in utils/shader.cpp.)
-	checkShader(vertexShader, "vertexShader");
-	// We add the compiled shader to the program
-	glAttachShader(program, vertexShader);
-	// The shader is only the text representation of the code, so now that it
-	// is compiled and attached to a program, we can free its textual
-	// representation.
-	glDeleteShader(vertexShader);
-
-	// Then same for the fragment shader
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-	checkShader(fragmentShader, "fragmentShader");
-	glAttachShader(program, fragmentShader);
-	glDeleteShader(fragmentShader);
-
-	// Again, as for a normal program, its objects (the shaders, in this case)
-	// must be linked together.
-	glLinkProgram(program);
-	checkProgram(program);
-
-	//////////////////////////////////////////
-	// 4. OTHER STUFF
-
-	// Enable some opengl capabilities you need, e.g. depth buffering:
-	glEnable(GL_DEPTH_TEST);
-}
-
-void finish() {
-	glDeleteProgram(program);
-	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(1, &vbo);
-}
-
-void update(double time) {
-	// There are several ways to update a scene. The most obvious one is to
-	// change values in its buffers.
-
-	//////////////////////////////////////////
-	// A. UPDATE VBO
-
-	// As an example of live vertex buffer update, we move the third vertex
-	// around its position.
-
-	// Create the new vertex data
-	GLfloat new_vertex[] = {
-		-.5f, -.5f,  0.f,   0.f, 0.f, 1.f,
-	};
-	new_vertex[0] += static_cast<GLfloat>(.1 * cos(time));
-	new_vertex[1] += static_cast<GLfloat>(.1 * sin(time));
-
-	// Update the VBO, sending new data to the GPU memory.
-	// The thrid point is located at an offset of twice the size of a vertex
-	// data.
-	GLintptr offset = 2 * sizeof(new_vertex);
-	glNamedBufferSubData(vbo, offset, sizeof(new_vertex), new_vertex);
-
-	//////////////////////////////////////////
-	// B. UPDATE UNIFORMS
-
-	// Uniforms are shader program global variables that are uniform for a
-	// given draw call, but can be modified at any time between them.
-	// Get the uniform index given its name. If the name does not match any
-	// uniform, this returns -1. Beware that even if the uniform is declared,
-	// it will be removed from the program at linkage if it is not used and so
-	// will have no location.
-	GLint loc = glGetUniformLocation(program, "uTime");
-	if (loc != -1) {
-		// Before using glUniform* we must bind the program
-		glUseProgram(program);
-		// There is a bunch of glUniform* functions to use depending on the
-		// type of the uniform variable. Here we use glUniform1f to set a
-		// single float.
-		glUniform1f(loc, static_cast<GLfloat>(time));
+class Scene {
+public:
+	Scene(const std::string & vertexShaderFilename, const std::string & fragShaderFilename, int instanceCount, float endTime)
+		: m_endTime(endTime)
+		, m_instanceCount(static_cast<GLuint>(instanceCount))
+	{
+		init(vertexShaderFilename, fragShaderFilename);
 	}
-}
 
-void render() {
-	// Set the color that will be used to fill the screen
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	// Clear the framebuffer. This fills the color attachment with the color
-	// defined on the previous line, but also reset the depth buffer.
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	~Scene() {
+		finish();
+	}
 
-	// Specify which program to run on the GPU
-	glUseProgram(program);
+	void update(double time) {
+		// B. UPDATE UNIFORMS
 
-	// Bind the VAO specifying where to get input data for the program. It
-	// remembers the vertex attributes and the associated vertex buffer
-	glBindVertexArray(vao);
+		GLint loc;
 
-	// Fire the actual drawing, after all!
-	// The first parameter tells which rendering type is used, and parametrizes
-	// the fixed rendering pipeline. The next numbers are the first vertex
-	// index to render and the number of vertex.
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-}
+		if (!m_realtime) {
+			time = m_frameIndex / m_fps;
+		}
+
+		loc = glGetUniformLocation(program, "time");
+		if (loc != -1) {
+			glProgramUniform1f(program, loc, static_cast<GLfloat>(time));
+		}
+
+		loc = glGetUniformLocation(m_blit_program, "prevPass");
+		if (loc != -1) {
+			glProgramUniform1i(m_blit_program, loc, static_cast<GLint>(0));
+		}
+
+		m_hasFinished = time > m_endTime;
+	}
+
+	void render() {
+		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+		glViewport(0, 0, m_fbo_width, m_fbo_height);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glUseProgram(program);
+		glBindVertexArray(vao);
+		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, m_instanceCount);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glViewport(0, 0, 1920, 1080);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glUseProgram(m_blit_program);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_color_rendertexture);
+
+		glBindVertexArray(vao);
+		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, 1);
+		
+		// Save frame
+		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+		glReadPixels(0, 0, m_fbo_width, m_fbo_width, GL_RGB, GL_UNSIGNED_BYTE, static_cast<void*>(m_pixels));
+
+		char filename[16];
+		sprintf(filename, "frame%04d.png", m_frameIndex++);
+		std::ofstream out(filename, std::ios::binary);
+		TinyPngOut pngout(static_cast<uint32_t>(m_fbo_width), static_cast<uint32_t>(m_fbo_height), out);
+		pngout.write(m_pixels, m_fbo_width * m_fbo_height);
+	}
+
+	bool hasFinished() const {
+		return m_hasFinished;
+	}
+
+private:
+	GLuint vbo;
+	GLuint vao;
+	GLuint program;
+	bool m_hasFinished;
+	float m_endTime;
+	GLuint m_instanceCount;
+
+	// Framebuffer
+	GLuint m_fbo;
+	size_t m_fbo_width;
+	size_t m_fbo_height;
+	GLuint m_color_rendertexture;
+	GLuint m_depth_rendertexture;
+	GLuint m_blit_program;
+
+	// PNG output
+	bool m_realtime;
+	int m_frameIndex;
+	float m_fps;
+	uint8_t *m_pixels;
+
+	void init(const std::string & vertexShaderFilename, const std::string & fragShaderFilename) {
+
+		// 0. FRAMEBUFFER
+
+		m_fbo_width = 2048;
+		m_fbo_height = 2048;
+
+		glCreateFramebuffers(1, &m_fbo);
+
+		glCreateTextures(GL_TEXTURE_2D, 1, &m_color_rendertexture);
+		glTextureStorage2D(m_color_rendertexture, 1, GL_RGBA8, m_fbo_width, m_fbo_height);
+		glTextureParameteri(m_color_rendertexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTextureParameteri(m_color_rendertexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureParameteri(m_color_rendertexture, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTextureParameteri(m_color_rendertexture, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glNamedFramebufferTexture(m_fbo, GL_COLOR_ATTACHMENT0, m_color_rendertexture, 0);
+
+		glCreateTextures(GL_TEXTURE_2D, 1, &m_depth_rendertexture);
+		glTextureStorage2D(m_depth_rendertexture, 1, GL_DEPTH_COMPONENT32F, m_fbo_width, m_fbo_height);
+		glTextureParameteri(m_depth_rendertexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTextureParameteri(m_depth_rendertexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureParameteri(m_depth_rendertexture, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTextureParameteri(m_depth_rendertexture, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glNamedFramebufferTexture(m_fbo, GL_DEPTH_ATTACHMENT, m_depth_rendertexture, 0);
+
+		m_realtime = false; // for recording set to false, for live play set to true
+		m_frameIndex = 0;
+		m_fps = 25;
+		m_pixels = new uint8_t[3 * m_fbo_width * m_fbo_height];
+
+		// 0.1. BLIT PROGRAM
+		// To copy framebuffer to screen
+
+		{
+			const std::string vertexShaderSource = loadTextfile("shaders/blit.vert");
+			const std::string fragmentShaderSource = loadTextfile("shaders/blit.frag");
+
+			const char *shaderSource;
+			m_blit_program = glCreateProgram();
+			GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+			shaderSource = vertexShaderSource.data();
+			glShaderSource(vertexShader, 1, &shaderSource, NULL);
+			glCompileShader(vertexShader);
+			checkShader(vertexShader, "vertexShader");
+			glAttachShader(m_blit_program, vertexShader);
+			glDeleteShader(vertexShader);
+
+			GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+			shaderSource = fragmentShaderSource.data();
+			glShaderSource(fragmentShader, 1, &shaderSource, NULL);
+			glCompileShader(fragmentShader);
+			checkShader(fragmentShader, "fragmentShader");
+			glAttachShader(m_blit_program, fragmentShader);
+			glDeleteShader(fragmentShader);
+
+			glLinkProgram(m_blit_program);
+			checkProgram(m_blit_program);
+		}
+
+		// 1. VERTEX BUFFER
+
+		const GLfloat points[] = {
+			/*     a_position             a_normal     a_texcoord   */
+			 -1.f,  -1.f,  0.f, 1.f,   0.f, 0.f, 1.f,   0.f, 0.f,
+			  1.f,  -1.f,  0.f, 1.f,   0.f, 0.f, 1.f,   1.f, 0.f,
+			 -1.f,   1.f,  0.f, 1.f,   0.f, 0.f, 1.f,   0.f, 1.f,
+			  1.f,   1.f,  0.f, 1.f,   0.f, 0.f, 1.f,   1.f, 1.f,
+		};
+
+		glCreateBuffers(1, &vbo);
+		glNamedBufferStorage(vbo, sizeof(points), NULL, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferSubData(vbo, 0, sizeof(points), points);
+
+		// 2. VERTEX ARRAY
+
+		glCreateVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), 0);
+
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(4 * sizeof(GLfloat)));
+
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(7 * sizeof(GLfloat)));
+
+		glBindVertexArray(0);
+
+		// 3. SHADERS
+
+		const std::string vertexShaderSource = loadTextfile(vertexShaderFilename);
+		const std::string fragmentShaderSource = loadTextfile(fragShaderFilename);
+
+		const char *shaderSource;
+		program = glCreateProgram();
+		GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+		shaderSource = vertexShaderSource.data();
+		glShaderSource(vertexShader, 1, &shaderSource, NULL);
+		glCompileShader(vertexShader);
+		checkShader(vertexShader, "vertexShader");
+		glAttachShader(program, vertexShader);
+		glDeleteShader(vertexShader);
+
+		GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+		shaderSource = fragmentShaderSource.data();
+		glShaderSource(fragmentShader, 1, &shaderSource, NULL);
+		glCompileShader(fragmentShader);
+		checkShader(fragmentShader, "fragmentShader");
+		glAttachShader(program, fragmentShader);
+		glDeleteShader(fragmentShader);
+
+		glLinkProgram(program);
+		checkProgram(program);
+
+		// 4. OTHER STUFF
+
+		glEnable(GL_DEPTH_TEST);
+
+		// Camera
+		//glm::mat4 p = glm::perspective(60.f, 1.77f, .01f, 100.f);
+		glm::mat4 p = glm::perspective(60.f, 1.f, .01f, 100.f);
+		glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, -3.f));
+		v = glm::scale(v, glm::vec3(-10.f, -10.f, 10.f));
+		glm::mat4 mvp = p * v;
+		GLint loc = glGetUniformLocation(program, "mvp");
+		if (loc != -1) {
+			glUseProgram(program);
+			glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(mvp));
+		}
+	}
+
+	void finish() {
+		glDeleteProgram(program);
+		glDeleteVertexArrays(1, &vao);
+		glDeleteBuffers(1, &vbo);
+
+		glDeleteFramebuffers(1, &m_fbo);
+		glDeleteTextures(1, &m_color_rendertexture);
+		glDeleteTextures(1, &m_depth_rendertexture);
+	}
+};
 
 /**
- * An example of key callback to feed to a GLFW window (see bellow in main)
  * /!\ key codes assume that you are using a Qwerty keyboard
  */
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -334,27 +286,54 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 }
 
+std::vector<Scene*> loadProg(const std::string & filename) {
+	std::vector<Scene*> scenes;
+	std::string prog = loadTextfile(filename);
+	std::istringstream ss(prog);
+	std::string line;
+	while (getline(ss, line)) {
+		std::vector<std::string> tokens;
+		std::string t;
+		std::istringstream sss(line);
+		while (getline(sss, t, '\t')) {
+			tokens.push_back(t);
+		}
+		int instanceCount = std::atoi(tokens[2].c_str());
+		float endTime = std::atof(tokens[3].c_str());
+		scenes.push_back(new Scene(tokens[0], tokens[1], instanceCount, endTime));
+		std::cout << "Loaded scene (" << tokens[0] << ", " << tokens[1] << ", " << instanceCount << ", " << endTime << ")" << std::endl;
+	}
+	return scenes;
+}
+
 int main(int argc, char *argv[]) {
 	GLFWwindow *window = startup();
 	if (!window) {
 		return EXIT_FAILURE;
 	}
 
-	// This is an example of how to use GLFW event callbacks. Checkout the
-	// documentation for other events:
-	// http://www.glfw.org/docs/latest/input_guide.html
 	glfwSetKeyCallback(window, key_callback);
 
-	init();
+	// Load scenes
+	std::vector<Scene*> scenes = loadProg("shaders/prog.csv");
+	int currentScene = 0;
+	double startTime = glfwGetTime();
 
-	while (!glfwWindowShouldClose(window)) {
-		update(glfwGetTime());
-		render();
+	while (!glfwWindowShouldClose(window) && currentScene < scenes.size()) {
+		scenes[currentScene]->update(glfwGetTime() - startTime);
+		scenes[currentScene]->render();
+		if (scenes[currentScene]->hasFinished()) {
+			currentScene++;
+			startTime = glfwGetTime();
+		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	finish();
+	// Delete scenes
+	for (auto it = scenes.begin() ; it != scenes.end() ; ++it) {
+		delete *it;
+	}
 
 	shutdown(window);
 	return EXIT_SUCCESS;
