@@ -1,11 +1,21 @@
 Augen Light
 ===========
 
+branch: `level0`
+
 ### About
 
 This is an OpenGL 4.5 Core "hello triangle" code using GLFW (to open a window) and glad (to load opengl). It includes the typical folder layout and CMakeLists that I use for larger projects.
 
 The C++ code of the program is located in [`src/AugenLight`](src/AugenLight) and in particular [`src/AugenLight/main.cpp`](src/AugenLight/main.cpp) is a fully commented sample explaining the use of a VBO, a VAO and a shader program to render a dynamic scene.
+
+### About this branch
+
+This project is organized with several branches, so that intersted people can choose a level of advancement of the project and potential options.
+
+*This branch is the simplest one, the first one to check out. ALl the other ones are built on top of it!*
+
+Check out the other branches as well!
 
 ### Downloading
 
@@ -13,6 +23,8 @@ This repository contains *submodules* to include the GLFW and glad repositories,
 
 ```
 git clone --recurse-submodules https://github.com/eliemichel/AugenLight.git
+cd AugenLight
+git checkout level0
 ```
 
 If you forgot to use the `--recurse-submodules`, you can get submodules with:
