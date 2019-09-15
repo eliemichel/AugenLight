@@ -1,11 +1,21 @@
 Augen Light
 ===========
 
+branch: `option-qt`
+
 ### About
 
 This is an OpenGL 4.5 Core "hello triangle" code using GLFW (to open a window) and glad (to load opengl). It includes the typical folder layout and CMakeLists that I use for larger projects.
 
 The C++ code of the program is located in [`src/AugenLight`](src/AugenLight) and in particular [`src/AugenLight/main.cpp`](src/AugenLight/main.cpp) is a fully commented sample explaining the use of a VBO, a VAO and a shader program to render a dynamic scene.
+
+### About this branch
+
+This project is organized with several branches, so that intersted people can choose a level of advancement of the project and potential options.
+
+*This branch is similar in features and advancement to the level0 branch, except that it is wrapped into a Qt project.*
+
+Check out the other branches as well!
 
 ### Downloading
 
@@ -13,6 +23,8 @@ This repository contains *submodules* to include the GLFW and glad repositories,
 
 ```
 git clone --recurse-submodules https://github.com/eliemichel/AugenLight.git
+cd AugenLight
+git checkout option-qt
 ```
 
 If you forgot to use the `--recurse-submodules`, you can get submodules with:
@@ -24,6 +36,8 @@ git submodule update --init --recursive
 ### Dependencies
 
 Before building, you may need some additional piece of software depending on your platform.
+
+*NB: Since this is the Qt branch, you obvioulsy need [Qt](https://www.qt.io/).*
 
 #### Windows
 
@@ -52,6 +66,8 @@ cmake ..
 ```
 
 You can chose which compiler to use in the call to `cmake`, using the `-G` option. See for instance [`build-msvc15.bat`](build-msvc15.bat) to build for Visual Studio 15 (2017), or the other build files for `mingw` or `gcc`. More easily, you can also just run one of those scripts, it will even get git submodules.
+
+If Qt is not found, you can specify its location using the `-DQt5_DIR` flag when calling cmake,  e.g. `cmake .. -DQt5_DIR=C:/Libraries/Qt/5.12.2/msvc2017_64/lib/cmake/Qt5`
 
 Once CMake has run, you can build the project. You can do it in command line, from the `build` directory:
 

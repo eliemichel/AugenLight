@@ -12,7 +12,9 @@ cd build-gcc
 
 # Call cmake to generate the Makefile. You can then build with 'make' and
 # install with 'make install'
-cmake .. -DCMAKE_BUILD_TYPE=Debug
+# If Qt is not found, you can specify its location using
+# e.g. -DQt5_DIR=E:/Qt/5.9.2/msvc2017_64/lib/cmake/Qt5
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DQt5_DIR=E:/Qt/5.12.1/5.12.1/msvc2017_64/lib/cmake/Qt5
 
 # Check that it run all right
 if [ $? -eq 0 ]

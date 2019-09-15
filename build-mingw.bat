@@ -9,7 +9,8 @@ mkdir build-mingw
 cd build-mingw
 
 :: Call cmake to generate the MinGW solution
-cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug
+:: If Qt is not found, you can specify its location using e.g. -DQt5_DIR=E:/Qt/5.9.2/msvc2017_64/lib/cmake/Qt5
+cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DQt5_DIR=E:/Qt/5.12.1/5.12.1/msvc2017_64/lib/cmake/Qt5
 
 @echo off
 :: Check that it run all right
