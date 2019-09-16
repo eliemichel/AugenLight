@@ -5,9 +5,9 @@ branch: `option-qt`
 
 ### About
 
-This is an OpenGL 4.5 Core "hello triangle" code using GLFW (to open a window) and glad (to load opengl). It includes the typical folder layout and CMakeLists that I use for larger projects.
+This is an OpenGL 4.5 Core "hello triangle" code using Qt (to open a window) and glad (to load opengl). It includes the typical folder layout and CMakeLists that I use for larger projects.
 
-The C++ code of the program is located in [`src/AugenLight`](src/AugenLight) and in particular [`src/AugenLight/main.cpp`](src/AugenLight/main.cpp) is a fully commented sample explaining the use of a VBO, a VAO and a shader program to render a dynamic scene.
+The C++ code of the program is located in [`src/AugenLight`](src/AugenLight) and is intensively commented. You can start from [`src/AugenLight/main.cpp`](src/AugenLight/main.cpp) and follow the comments, it reads a bit like a blog post if you will.
 
 ### About this branch
 
