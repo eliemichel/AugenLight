@@ -39,7 +39,7 @@ public:
 	~Viewer();
 
 	void update(double time);
-	void render();
+	void render() const;
 	void resize(int width, int height);
 
 private:

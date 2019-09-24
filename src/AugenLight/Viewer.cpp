@@ -126,7 +126,7 @@ void Viewer::update(double time) {
 	}
 }
 
-void Viewer::render() {
+void Viewer::render() const {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
