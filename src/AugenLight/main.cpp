@@ -34,11 +34,9 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
-#include <fstream>
 #include <glm/glm/glm.hpp>
 #include <glm/glm/gtc/matrix_transform.hpp>
 #include <glm/glm/gtc/type_ptr.hpp>
-#include "TinyPngOut.hpp"
 
 class Scene {
 public:
@@ -98,12 +96,6 @@ public:
 		// Save frame
 		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 		glReadPixels(0, 0, m_fbo_width, m_fbo_width, GL_RGB, GL_UNSIGNED_BYTE, static_cast<void*>(m_pixels));
-
-		char filename[16];
-		sprintf(filename, "frame%04d.png", m_frameIndex++);
-		std::ofstream out(filename, std::ios::binary);
-		TinyPngOut pngout(static_cast<uint32_t>(m_fbo_width), static_cast<uint32_t>(m_fbo_height), out);
-		pngout.write(m_pixels, m_fbo_width * m_fbo_height);
 	}
 
 	bool hasFinished() const {
@@ -253,8 +245,7 @@ private:
 		glEnable(GL_DEPTH_TEST);
 
 		// Camera
-		//glm::mat4 p = glm::perspective(60.f, 1.77f, .01f, 100.f);
-		glm::mat4 p = glm::perspective(60.f, 1.f, .01f, 100.f);
+		glm::mat4 p = glm::perspective(60.f, 1.77f, .01f, 100.f);
 		glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, -3.f));
 		v = glm::scale(v, glm::vec3(-10.f, -10.f, 10.f));
 		glm::mat4 mvp = p * v;
